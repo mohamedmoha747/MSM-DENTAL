@@ -114,3 +114,4 @@ const sendWhatsAppNotification = async (appointmentData) => {
 module.exports = {
   sendAppointmentConfirmation,
   sendWhatsAppNotification
+};
