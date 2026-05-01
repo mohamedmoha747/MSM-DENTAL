@@ -55,8 +55,29 @@ const AppointmentForm = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
+  const [countdown, setCountdown] = useState(null);
+  const [timedOut, setTimedOut] = useState(false);
 
-  // Reset branch if not available when date or doctor changes
+  // Countdown timer effect for request timeout handling
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown <= 0) {
+      setTimedOut(true);
+      setLoading(false);
+      setCountdown(null);
+      setMessageType('error');
+      setMessage('⏱️ Taking longer than expected. Please try again.');
+      setTimeout(() => setMessage(''), 7000);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
   const getAvailableBranches = useCallback(() => {
     const doctor = formData.doctor;
     const docConfig = doctorAvailability[doctor];
@@ -248,15 +269,25 @@ const AppointmentForm = () => {
       return;
     }
 
+    // Disable button, show loading, start countdown
     setLoading(true);
+    setTimedOut(false);
+    setCountdown(90);
+    setMessage('');
+
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
         ...formData,
         date: new Date(formData.date),
       });
 
+      // Stop countdown and show success
+      setCountdown(null);
+      setLoading(false);
       setMessageType('success');
-      setMessage('✅ Appointment booked successfully!');
+      setMessage('✅ Appointment booked successfully! You will receive a confirmation shortly.');
+      
+      // Reset form
       setFormData({
         name: '',
         phone: '',
@@ -268,15 +299,17 @@ const AppointmentForm = () => {
         message: '',
       });
       setValidationErrors({});
-      setTimeout(() => setMessage(''), 5000);
+      setTimeout(() => setMessage(''), 7000);
     } catch (error) {
+      // Stop countdown and show error
+      setCountdown(null);
+      setLoading(false);
       setMessageType('error');
       const errorMessage =
         error.response?.data?.message || 'Error booking appointment. Please try again.';
       setMessage(`❌ ${errorMessage}`);
-      setTimeout(() => setMessage(''), 5000);
+      setTimeout(() => setMessage(''), 7000);
     }
-    setLoading(false);
   };
 
   const allScheduleSlots = availableSlots.length > 0 ? availableSlots : getAllScheduleSlots();
@@ -523,12 +556,19 @@ const AppointmentForm = () => {
           <motion.button
             variants={itemVariants}
             type="submit"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
             disabled={loading}
-            className="w-full bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/50 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+            className="w-full bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/50 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm md:text-base flex items-center justify-center gap-2"
           >
-            {loading ? '⏳ Booking...' : '📅 Book Appointment'}
+            {loading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span>Booking... {countdown}s</span>
+              </>
+            ) : (
+              '📅 Book Appointment'
+            )}
           </motion.button>
 
           {message && (
