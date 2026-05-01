@@ -18,6 +18,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dental_clin
 
 // Routes
 app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/available-slots', require('./routes/availableSlots'));
 
 const PORT = process.env.PORT || 5000;
 
