@@ -9,7 +9,7 @@ const AdminAbout = () => {
   const fetchAbout = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/about');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/about`);
       setAbout({
         title: response.data.title || '',
         description: response.data.description || '',
@@ -30,7 +30,7 @@ const AdminAbout = () => {
     }
 
     try {
-      await axios.put('/api/about', about);
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/about`, about);
       setMessage('About page content saved successfully.');
     } catch (error) {
       console.error('Save about failed:', error);

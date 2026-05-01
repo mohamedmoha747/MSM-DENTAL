@@ -13,7 +13,7 @@ const AdminTreatments = () => {
   const fetchTreatments = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/treatments');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/treatments`);
       setTreatments(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Fetch treatments failed:', error);
@@ -36,7 +36,7 @@ const AdminTreatments = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this treatment?')) return;
     try {
-      await axios.delete(`/api/treatments/${id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/treatments/${id}`);
       setFeedback('Treatment deleted successfully.');
       fetchTreatments();
     } catch (error) {
@@ -55,10 +55,10 @@ const AdminTreatments = () => {
 
     try {
       if (editingId) {
-        await axios.put(`/api/treatments/${editingId}`, formValues);
+        await axios.put(`${process.env.REACT_APP_API_URL}/api/treatments/${editingId}`, formValues);
         setFeedback('Treatment updated successfully.');
       } else {
-        await axios.post('/api/treatments', formValues);
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/treatments`, formValues);
         setFeedback('New treatment added successfully.');
       }
 

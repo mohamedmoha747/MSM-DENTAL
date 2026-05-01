@@ -13,7 +13,7 @@ const AdminDashboard = () => {
   const fetchDashboardStats = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/appointments/stats/dashboard');
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/appointments/stats/dashboard`);
       setStats(response.data);
     } catch (error) {
       console.error('Dashboard stats error:', error);

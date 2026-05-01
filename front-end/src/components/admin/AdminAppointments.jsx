@@ -86,7 +86,7 @@ const AdminAppointments = () => {
     setLoading(true);
     try {
       const queryString = buildQueryParams(page);
-      const response = await axios.get(`/api/appointments?${queryString}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/appointments?${queryString}`);
       setAppointments(Array.isArray(response.data.appointments) ? response.data.appointments : []);
       setTotalPages(response.data.pagination?.pages || 1);
       setCurrentPage(page);
@@ -100,7 +100,7 @@ const AdminAppointments = () => {
   const deleteAppointment = async (id) => {
     if (!window.confirm('Delete this appointment?')) return;
     try {
-      await axios.delete(`/api/appointments/${id}`);
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/appointments/${id}`);
       setMessage('Appointment deleted successfully.');
       fetchAppointments(1);
     } catch (error) {
@@ -111,7 +111,7 @@ const AdminAppointments = () => {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await axios.put(`/api/appointments/${id}/status`, { status: newStatus });
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/appointments/${id}/status`, { status: newStatus });
       setMessage(`Status updated to ${newStatus}`);
       fetchAppointments(currentPage);
     } catch (error) {
@@ -128,7 +128,7 @@ const AdminAppointments = () => {
 
   const saveNotes = async () => {
     try {
-      await axios.put(`/api/appointments/${selectedAppointmentId}/notes`, { notes: notesText });
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/appointments/${selectedAppointmentId}/notes`, { notes: notesText });
       setMessage('Notes saved successfully.');
       setShowNotesModal(false);
       fetchAppointments(currentPage);
@@ -159,7 +159,7 @@ const AdminAppointments = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('/api/appointments', appointmentFormData);
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, appointmentFormData);
       setAppointmentSuccess('✅ Appointment created successfully!');
       setAppointmentFormData({
         name: '',

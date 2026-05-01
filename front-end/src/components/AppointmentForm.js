@@ -175,7 +175,7 @@ const AppointmentForm = () => {
     setSlotsError('');
 
     try {
-      const response = await axios.get('http://localhost:5000/api/available-slots', {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/available-slots`, {
         params: {
           date: formData.date,
           branch: formData.branch,
@@ -242,7 +242,7 @@ const AppointmentForm = () => {
 
     setLoading(true);
     try {
-      await axios.post('http://localhost:5000/api/appointments', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
         ...formData,
         date: new Date(formData.date),
       });

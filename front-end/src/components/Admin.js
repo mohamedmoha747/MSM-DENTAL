@@ -51,7 +51,7 @@ const Admin = () => {
   const fetchDashboardStats = async () => {
     try {
       const response = await axios.get(
-        'http://localhost:5000/api/appointments/stats/dashboard'
+        `${process.env.REACT_APP_API_URL}/api/appointments/stats/dashboard`
       );
       setStats(response.data);
     } catch (error) {
@@ -98,7 +98,7 @@ const Admin = () => {
     try {
       const queryString = buildQueryParams(page);
       const response = await axios.get(
-        `http://localhost:5000/api/appointments?${queryString}`
+        `${process.env.REACT_APP_API_URL}/api/appointments?${queryString}`
       );
       setAppointments(response.data.appointments);
       setTotalPages(response.data.pagination.pages);
@@ -113,7 +113,7 @@ const Admin = () => {
   const deleteAppointment = async (id) => {
     if (window.confirm('Are you sure you want to delete this appointment?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/appointments/${id}`);
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/appointments/${id}`);
         alert('✅ Appointment deleted');
         fetchAppointments(1);
         fetchDashboardStats();
@@ -127,7 +127,7 @@ const Admin = () => {
   const updateStatus = async (id, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/appointments/${id}/status`,
+        `${process.env.REACT_APP_API_URL}/api/appointments/${id}/status`,
         { status: newStatus }
       );
       fetchAppointments(currentPage);
@@ -148,7 +148,7 @@ const Admin = () => {
   const saveNotes = async () => {
     try {
       await axios.put(
-        `http://localhost:5000/api/appointments/${selectedAppointmentId}/notes`,
+        `${process.env.REACT_APP_API_URL}/api/appointments/${selectedAppointmentId}/notes`,
         { notes: notesText }
       );
       alert('✅ Notes saved');
