@@ -52,6 +52,7 @@ const AppointmentForm = () => {
   const [messageType, setMessageType] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
   const [bookedSlots, setBookedSlots] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
 
@@ -167,6 +168,7 @@ const AppointmentForm = () => {
   const fetchAvailableSlots = async () => {
     if (!formData.date || !formData.branch || !formData.doctor) {
       setBookedSlots([]);
+      setAvailableSlots([]);
       setSlotsError('');
       return;
     }
@@ -174,23 +176,29 @@ const AppointmentForm = () => {
     setSlotsLoading(true);
     setSlotsError('');
 
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/available-slots`, {
-        params: {
-          date: formData.date,
-          branch: formData.branch,
-          doctor: formData.doctor,
-        },
-      });
+    const date = encodeURIComponent(formData.date);
+    const branch = encodeURIComponent(formData.branch);
+    const doctor = encodeURIComponent(formData.doctor);
+    const url = `${process.env.REACT_APP_API_URL}/api/available-slots?date=${date}&branch=${branch}&doctor=${doctor}`;
+    console.log('Fetching slots from URL:', url);
 
+    try {
+      const response = await axios.get(url);
+
+      console.log('Slots API response:', response.data);
+      const apiSlots = response.data.slots || [];
       const bookeds = response.data.bookedSlots || [];
+
+      setAvailableSlots(apiSlots);
       setBookedSlots(bookeds);
 
       if (formData.time && bookeds.includes(formData.time)) {
         setFormData((prev) => ({ ...prev, time: '' }));
       }
     } catch (error) {
+      console.error('Failed to fetch slots:', error);
       setBookedSlots([]);
+      setAvailableSlots([]);
       setSlotsError(error.response?.data?.message || 'Unable to load available slots');
     } finally {
       setSlotsLoading(false);
@@ -271,7 +279,7 @@ const AppointmentForm = () => {
     setLoading(false);
   };
 
-  const allScheduleSlots = getAllScheduleSlots();
+  const allScheduleSlots = availableSlots.length > 0 ? availableSlots : getAllScheduleSlots();
 
   const containerVariants = {
     hidden: { opacity: 0 },
