@@ -105,6 +105,21 @@ const createAppointment = async (req, res) => {
   }
 
   try {
+    // Check for existing appointment with same date, time, doctor, and branch
+    const existingAppointment = await Appointment.findOne({
+      date: new Date(date),
+      time,
+      doctor,
+      branch,
+      status: { $in: ['Pending', 'Confirmed'] } // Don't allow booking if already pending or confirmed
+    });
+
+    if (existingAppointment) {
+      return res.status(409).json({
+        message: 'This time slot is already booked. Please choose another time.'
+      });
+    }
+
     const newAppointment = new Appointment({
       name,
       phone,
