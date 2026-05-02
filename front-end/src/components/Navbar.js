@@ -88,7 +88,7 @@ const Navbar = () => {
                   to="/admin"
                   className="hidden sm:block gradient-btn text-sm px-3 py-2 md:px-4 md:py-2"
                 >
-                  Admin
+                  LOGIN
                 </Link>
               )}
 
