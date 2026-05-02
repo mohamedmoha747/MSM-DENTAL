@@ -18,8 +18,17 @@ const appointmentSchema = new mongoose.Schema({
     enum: ['Pattukkottai', 'Adirampattinam'],
     required: true,
   },
+  doctor: {
+    type: String,
+    enum: ['sameer', 'fahmitha'],
+    required: true,
+  },
   date: {
     type: Date,
+    required: true,
+  },
+  time: {
+    type: String,
     required: true,
   },
   message: {

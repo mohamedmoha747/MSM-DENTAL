@@ -90,14 +90,18 @@ const getDashboardStats = async (req, res) => {
 
 // Create a new appointment
 const createAppointment = async (req, res) => {
-  const { name, phone, email, branch, date, message } = req.body;
+  const { name, phone, email, branch, doctor, date, time, message } = req.body;
 
-  if (!name || !phone || !email || !branch || !date || !message) {
+  if (!name || !phone || !email || !branch || !doctor || !date || !time || !message) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
   if (!['Pattukkottai', 'Adirampattinam'].includes(branch)) {
     return res.status(400).json({ message: 'Invalid branch selected' });
+  }
+
+  if (!['sameer', 'fahmitha'].includes(doctor)) {
+    return res.status(400).json({ message: 'Invalid doctor selected' });
   }
 
   try {
@@ -106,7 +110,9 @@ const createAppointment = async (req, res) => {
       phone,
       email,
       branch,
+      doctor,
       date,
+      time,
       message,
       status: 'Pending',
       notes: '',
