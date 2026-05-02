@@ -56,14 +56,12 @@ const AppointmentForm = () => {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState('');
   const [countdown, setCountdown] = useState(null);
-  const [timedOut, setTimedOut] = useState(false);
 
   // Countdown timer effect for request timeout handling
   useEffect(() => {
     if (countdown === null) return;
 
     if (countdown <= 0) {
-      setTimedOut(true);
       setLoading(false);
       setCountdown(null);
       setMessageType('error');
@@ -271,12 +269,11 @@ const AppointmentForm = () => {
 
     // Disable button, show loading, start countdown
     setLoading(true);
-    setTimedOut(false);
     setCountdown(90);
     setMessage('');
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
         ...formData,
         date: new Date(formData.date),
       });
