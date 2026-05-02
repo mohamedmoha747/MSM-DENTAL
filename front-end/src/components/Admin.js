@@ -12,6 +12,7 @@ const Admin = () => {
   });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ const Admin = () => {
     const validEmail = 'msm@dentalclinic.com';
     const validPassword = 'msm17986655@';
 
-    if (email.trim().toLowerCase() === validEmail && password === validPassword) {
+    if (email.trim().toLowerCase() === validEmail && password.trim() === validPassword) {
       setAuthenticated(true);
       setErrorMessage('');
       fetchAppointments(1);
@@ -260,14 +261,23 @@ const Admin = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                  <input
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-                    className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-white placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 transition"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                      className="w-full rounded-2xl border border-slate-700 bg-slate-950/90 px-4 py-3 pr-12 text-white placeholder:text-slate-500 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/20 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200"
+                    >
+                      {showPassword ? '🙈' : '👁️'}
+                    </button>
+                  </div>
                 </div>
                 {errorMessage && (
                   <p className="text-sm text-rose-400">{errorMessage}</p>
