@@ -139,14 +139,10 @@ const createAppointment = async (req, res) => {
     res.status(201).json(savedAppointment);
 
     // Send confirmation email in background (non-blocking)
-    sendAppointmentConfirmation(savedAppointment).catch((error) => {
-      console.error('Background email error:', error.message);
-    });
+    sendAppointmentConfirmation(savedAppointment);
 
     // Send WhatsApp notification in background (non-blocking)
-    sendWhatsAppNotification(savedAppointment).catch((error) => {
-      console.error('Background WhatsApp error:', error.message);
-    });
+    sendWhatsAppNotification(savedAppointment);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
