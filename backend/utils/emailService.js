@@ -1,19 +1,64 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter function
+// Create transporter function with fallback options
 const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+  // Try different configurations in order of preference
+  const configs = [
+    // Primary: Gmail SMTP with STARTTLS on port 587 (recommended)
+    {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false, // Use STARTTLS
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        minVersion: 'TLSv1.2', // Modern TLS version
+        rejectUnauthorized: false // Allow Gmail's certificate chain
+      },
+      // Remove family: 4 to allow both IPv4 and IPv6
+      connectionTimeout: 60000,
+      socketTimeout: 60000,
+      greetingTimeout: 30000,
+      logger: false, // Reduce log noise in production
+      debug: false
     },
-    tls: {
-      rejectUnauthorized: false
+    // Fallback: Gmail SMTP with SSL on port 465
+    {
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Use SSL
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      },
+      tls: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: false // Allow Gmail's certificate chain
+      },
+      // Remove family: 4 to allow both IPv4 and IPv6
+      connectionTimeout: 60000,
+      socketTimeout: 60000,
+      greetingTimeout: 30000,
+      logger: false,
+      debug: false
     }
-  });
+  ];
+
+  let lastError;
+  for (const config of configs) {
+    try {
+      const transporter = nodemailer.createTransport(config);
+      console.log(`Trying SMTP config: ${config.host}:${config.port} (secure: ${config.secure})`);
+      return transporter;
+    } catch (error) {
+      console.log(`Config failed: ${error.message}`);
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error('No valid SMTP configuration found');
 };
 
 
@@ -32,11 +77,22 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       return;
     }
 
+    console.log('Attempting to send email to:', appointmentData.email);
     const transporter = createTransporter();
+
+    // Verify connection before sending
+    try {
+      await transporter.verify();
+      console.log('SMTP connection verified successfully');
+    } catch (verifyError) {
+      console.error('SMTP verification failed:', verifyError.message);
+      throw new Error(`SMTP connection failed: ${verifyError.message}`);
+    }
+
     const { name, email, date } = appointmentData;
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"MSM Dental Clinic" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Appointment Confirmation - MSM Dental Clinic',
       html: `
@@ -52,10 +108,16 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log('Confirmation email sent successfully');
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Confirmation email sent successfully:', info.messageId);
   } catch (error) {
     console.error('Error sending email:', error.message);
+    if (error.code) {
+      console.error('Error code:', error.code);
+    }
+    if (error.command) {
+      console.error('SMTP command:', error.command);
+    }
     // Don't throw error to prevent appointment creation failure
   }
 };
