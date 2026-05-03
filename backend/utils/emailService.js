@@ -1,10 +1,12 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: process.env.BREVO_USER,
+    pass: process.env.BREVO_PASS
   }
 });
 
@@ -16,10 +18,10 @@ const transporter = nodemailer.createTransport({
 // Send appointment confirmation email
 const sendAppointmentConfirmation = async (appointmentData) => {
   try {
-    // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS ||
-        process.env.EMAIL_USER === 'your-gmail@gmail.com' ||
-        process.env.EMAIL_PASS === 'your-16-character-app-password') {
+    // Check if Brevo credentials are configured
+    if (!process.env.BREVO_USER || !process.env.BREVO_PASS ||
+        process.env.BREVO_USER === 'your_brevo_email' ||
+        process.env.BREVO_PASS === 'your_smtp_key') {
       console.log('Email not configured - skipping email send');
       return;
     }
@@ -28,7 +30,7 @@ const sendAppointmentConfirmation = async (appointmentData) => {
     const { name, email, date } = appointmentData;
 
     const mailOptions = {
-      from: `"MSM Dental Clinic" <${process.env.EMAIL_USER}>`,
+      from: `"MSM Dental Clinic" <${process.env.BREVO_USER}>`,
       to: email,
       subject: 'Appointment Confirmation - MSM Dental Clinic',
       html: `
