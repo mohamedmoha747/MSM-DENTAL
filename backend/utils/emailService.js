@@ -3,6 +3,7 @@ const nodemailer = require('nodemailer');
 console.log('Creating transporter...');
 console.log('EMAIL USER:', process.env.EMAIL_USER);
 console.log('EMAIL PASS:', process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
+console.log('BREVO API KEY:', process.env.BREVO_API_KEY ? 'Loaded' : 'Missing');
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
@@ -49,11 +50,18 @@ const sendAppointmentConfirmation = async (appointmentData) => {
     console.log('Attempting to send email to:', appointmentData.email);
     const { name, email, date } = appointmentData;
 
-    const mailOptions = {
-      from: `"MSM Dental Clinic" <${process.env.EMAIL_USER}>`,
-      to: email,
+    // Use Brevo API instead of SMTP for Render compatibility
+    const emailData = {
+      sender: {
+        name: "MSM Dental Clinic",
+        email: process.env.EMAIL_USER
+      },
+      to: [{
+        email: email,
+        name: name
+      }],
       subject: 'Appointment Confirmation - MSM Dental Clinic',
-      html: `
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Appointment Confirmed!</h2>
           <p>Hi ${name},</p>
@@ -66,19 +74,31 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       `
     };
 
-    console.log('Sending email to:', appointmentData.email);
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Confirmation email sent successfully:', info.messageId, info.response);
+    console.log('Sending email via Brevo API...');
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(emailData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Brevo API error: ${response.status} - ${errorData}`);
+    }
+
+    const result = await response.json();
+    console.log('Confirmation email sent successfully via API:', result.messageId);
   } catch (error) {
     console.error('EMAIL ERROR FULL:', error);
     if (error && error.code) {
       console.error('Error code:', error.code);
     }
     if (error && error.response) {
-      console.error('SMTP response:', error.response);
-    }
-    if (error && error.command) {
-      console.error('SMTP command:', error.command);
+      console.error('API response:', error.response);
     }
     // Don't throw error to prevent appointment creation failure
   }

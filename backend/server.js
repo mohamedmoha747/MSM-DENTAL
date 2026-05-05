@@ -8,6 +8,8 @@ const path = require('path');
 const envPath = path.resolve(__dirname, '.env');
 dotenv.config({ path: envPath });
 console.log('Loaded environment variables from:', envPath);
+console.log('EMAIL_USER after load:', process.env.EMAIL_USER);
+console.log('EMAIL_PASS after load:', process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
 
 const app = express();
 
