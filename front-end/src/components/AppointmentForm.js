@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 // Doctor availability configuration (constant outside component)
 const doctorAvailability = {
   sameer: {
@@ -198,7 +200,7 @@ const AppointmentForm = () => {
     const date = encodeURIComponent(formData.date);
     const branch = encodeURIComponent(formData.branch);
     const doctor = encodeURIComponent(formData.doctor);
-    const url = `${process.env.REACT_APP_API_URL}/api/available-slots?date=${date}&branch=${branch}&doctor=${doctor}`;
+    const url = `${API_URL}/api/available-slots?date=${date}&branch=${branch}&doctor=${doctor}`;
     console.log('Fetching slots from URL:', url);
 
     try {
@@ -273,7 +275,9 @@ const AppointmentForm = () => {
     setMessage('');
 
     try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, {
+      const url = `${API_URL}/api/appointments`;
+      console.log('Submitting appointment to:', url, formData);
+      await axios.post(url, {
         ...formData,
         date: new Date(formData.date),
       });

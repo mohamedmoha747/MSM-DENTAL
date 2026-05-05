@@ -105,6 +105,8 @@ const createAppointment = async (req, res) => {
   }
 
   try {
+    console.log('createAppointment called with:', { name, phone, email, branch, doctor, date, time });
+
     // Check for existing appointment with same date, time, doctor, and branch
     const existingAppointment = await Appointment.findOne({
       date: new Date(date),
@@ -115,6 +117,7 @@ const createAppointment = async (req, res) => {
     });
 
     if (existingAppointment) {
+      console.log('Appointment conflict detected for:', { date, time, doctor, branch });
       return res.status(409).json({
         message: 'This time slot is already booked. Please choose another time.'
       });
@@ -134,16 +137,25 @@ const createAppointment = async (req, res) => {
     });
 
     const savedAppointment = await newAppointment.save();
+    console.log('Appointment saved:', savedAppointment._id);
+    console.log('Appointment saved, calling email function...');
+    console.log('Calling email function...');
 
     // Send response immediately to frontend (don't await email/WhatsApp)
-    res.status(201).json(savedAppointment);
+    res.status(201).json({
+      appointment: savedAppointment,
+      message: 'Appointment created. Email and WhatsApp notification are queued.'
+    });
 
     // Send confirmation email in background (non-blocking)
+    console.log('Queueing email send for:', savedAppointment.email);
     sendAppointmentConfirmation(savedAppointment);
 
     // Send WhatsApp notification in background (non-blocking)
+    console.log('Queueing WhatsApp notification for:', savedAppointment.phone);
     sendWhatsAppNotification(savedAppointment);
   } catch (error) {
+    console.error('createAppointment error:', error.message);
     res.status(500).json({ message: error.message });
   }
 };

@@ -1,15 +1,29 @@
 const nodemailer = require('nodemailer');
 
+console.log('Creating transporter...');
+console.log('EMAIL USER:', process.env.EMAIL_USER);
+console.log('EMAIL PASS:', process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
+
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com", // or smtp.gmail.com
+  host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
   auth: {
-    user: process.env.BREVO_USER,
-    pass: process.env.BREVO_PASS
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
-  family: 4 // 🔥 FORCE IPv4 (THIS FIXES ERROR)
+  family: 4, // FORCE IPv4
+  connectionTimeout: 10000,
+  greetingTimeout: 5000,
+  socketTimeout: 10000,
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
+
+transporter.verify()
+  .then(() => console.log('SMTP transporter verified and ready to send email'))
+  .catch((error) => console.error('SMTP transport verification failed:', error.message || error));
 
 
 
@@ -19,19 +33,24 @@ const transporter = nodemailer.createTransport({
 // Send appointment confirmation email
 const sendAppointmentConfirmation = async (appointmentData) => {
   try {
-    // Check if Brevo credentials are configured
-    if (!process.env.BREVO_USER || !process.env.BREVO_PASS ||
-        process.env.BREVO_USER === 'your_brevo_email' ||
-        process.env.BREVO_PASS === 'your_smtp_key') {
-      console.log('Email not configured - skipping email send');
+    console.log('Email function triggered');
+    console.log('sendAppointmentConfirmation invoked for:', appointmentData?.email);
+
+    if (!appointmentData || !appointmentData.email) {
+      console.error('sendAppointmentConfirmation missing appointment email data');
       return;
+    }
+
+    console.log('ENV CHECK:', process.env.EMAIL_USER, process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('EMAIL ENV NOT SET');
     }
 
     console.log('Attempting to send email to:', appointmentData.email);
     const { name, email, date } = appointmentData;
 
     const mailOptions = {
-      from: `"MSM Dental Clinic" <${process.env.BREVO_USER}>`,
+      from: `"MSM Dental Clinic" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Appointment Confirmation - MSM Dental Clinic',
       html: `
@@ -47,14 +66,18 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       `
     };
 
+    console.log('Sending email to:', appointmentData.email);
     const info = await transporter.sendMail(mailOptions);
-    console.log('Confirmation email sent successfully:', info.messageId);
+    console.log('Confirmation email sent successfully:', info.messageId, info.response);
   } catch (error) {
-    console.error('Error sending email:', error.message);
-    if (error.code) {
+    console.error('EMAIL ERROR FULL:', error);
+    if (error && error.code) {
       console.error('Error code:', error.code);
     }
-    if (error.command) {
+    if (error && error.response) {
+      console.error('SMTP response:', error.response);
+    }
+    if (error && error.command) {
       console.error('SMTP command:', error.command);
     }
     // Don't throw error to prevent appointment creation failure
