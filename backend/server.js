@@ -17,6 +17,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Global request logger - LOGS ALL INCOMING REQUESTS
+app.use((req, res, next) => {
+  process.stdout.write(`\n🌐 INCOMING REQUEST: ${req.method} ${req.path}\n`);
+  console.log('Headers:', req.headers);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/dental_clinic')
 .then(() => console.log('MongoDB connected'))

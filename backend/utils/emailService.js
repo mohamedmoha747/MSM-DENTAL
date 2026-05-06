@@ -1,17 +1,17 @@
 const nodemailer = require('nodemailer');
 
-console.log('Creating transporter...');
-console.log('EMAIL USER:', process.env.EMAIL_USER);
-console.log('EMAIL PASS:', process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
-console.log('BREVO API KEY:', process.env.BREVO_API_KEY ? 'Loaded' : 'Missing');
+console.log('Email Service Initialized');
+console.log('EMAIL_USER (Sender):', process.env.EMAIL_USER);
+console.log('BREVO_API_KEY:', process.env.BREVO_API_KEY ? 'Loaded' : 'MISSING - Email will fail!');
 
+// Note: Using Brevo API v3 instead of SMTP for better reliability on serverless platforms
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
   secure: false,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: 'not-needed-using-api', // Placeholder - Brevo API is used instead
   },
   family: 4, // FORCE IPv4
   connectionTimeout: 10000,
@@ -22,10 +22,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify()
-  .then(() => console.log('SMTP transporter verified and ready to send email'))
-  .catch((error) => console.error('SMTP transport verification failed:', error.message || error));
-
 
 
 
@@ -33,28 +29,38 @@ transporter.verify()
 
 // Send appointment confirmation email
 const sendAppointmentConfirmation = async (appointmentData) => {
+  // IMMEDIATE LOG - force output
+  process.stdout.write('[EMAIL] ⭐ FUNCTION CALLED for: ' + appointmentData?.email + '\n');
+  
   try {
-    console.log('Email function triggered');
-    console.log('sendAppointmentConfirmation invoked for:', appointmentData?.email);
+    console.log('[EMAIL] Starting email process...');
 
     if (!appointmentData || !appointmentData.email) {
-      console.error('sendAppointmentConfirmation missing appointment email data');
+      console.error('[EMAIL ERROR] Missing appointment or email data');
       return;
     }
 
-    console.log('ENV CHECK:', process.env.EMAIL_USER, process.env.EMAIL_PASS ? 'Loaded' : 'Missing');
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('EMAIL ENV NOT SET');
+    // Validate required environment variables
+    if (!process.env.BREVO_API_KEY) {
+      console.error('[EMAIL ERROR] BREVO_API_KEY is not set in .env file');
+      return;
     }
 
-    console.log('Attempting to send email to:', appointmentData.email);
+    if (!process.env.EMAIL_USER) {
+      console.error('[EMAIL ERROR] EMAIL_USER (sender email) is not set in .env file');
+      return;
+    }
+
+    console.log('[EMAIL] ✓ Sender email:', process.env.EMAIL_USER);
+    console.log('[EMAIL] ✓ Recipient:', appointmentData.email);
+
     const { name, email, date } = appointmentData;
 
-    // Use Brevo API instead of SMTP for Render compatibility
+    // Prepare email payload for Brevo API v3
     const emailData = {
       sender: {
         name: "MSM Dental Clinic",
-        email: process.env.EMAIL_USER
+        email: process.env.EMAIL_USER // MUST be verified in Brevo account
       },
       to: [{
         email: email,
@@ -74,7 +80,9 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       `
     };
 
-    console.log('Sending email via Brevo API...');
+    console.log('[EMAIL] Sending to Brevo API...');
+    console.log('[EMAIL] Payload:', JSON.stringify(emailData, null, 2));
+
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -85,22 +93,28 @@ const sendAppointmentConfirmation = async (appointmentData) => {
       body: JSON.stringify(emailData)
     });
 
+    process.stdout.write('[EMAIL] API Response Status: ' + response.status + ' ' + response.statusText + '\n');
+    console.log('[EMAIL] Full response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.text();
+      process.stdout.write('[EMAIL ERROR] ❌ Brevo API failed with status ' + response.status + '\n');
+      console.error('[EMAIL ERROR] Response body:', errorData);
       throw new Error(`Brevo API error: ${response.status} - ${errorData}`);
     }
 
     const result = await response.json();
-    console.log('Confirmation email sent successfully via API:', result.messageId);
+    process.stdout.write('✅✅✅ [EMAIL SUCCESS] Email sent! MessageId: ' + result.messageId + ' ✅✅✅\n');
+    console.log('[EMAIL SUCCESS] Email sent via Brevo API. MessageId:', result.messageId);
   } catch (error) {
-    console.error('EMAIL ERROR FULL:', error);
+    process.stdout.write('[EMAIL EXCEPTION] ❌ Error occurred: ' + error.message + '\n');
+    console.error('[EMAIL EXCEPTION] Error occurred:');
+    console.error('[EMAIL EXCEPTION] Message:', error.message);
+    console.error('[EMAIL EXCEPTION] Stack:', error.stack);
     if (error && error.code) {
-      console.error('Error code:', error.code);
+      console.error('[EMAIL EXCEPTION] Code:', error.code);
     }
-    if (error && error.response) {
-      console.error('API response:', error.response);
-    }
-    // Don't throw error to prevent appointment creation failure
+    // Don't rethrow - email failure should not prevent appointment creation
   }
 };
 

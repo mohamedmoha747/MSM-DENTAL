@@ -90,6 +90,7 @@ const getDashboardStats = async (req, res) => {
 
 // Create a new appointment
 const createAppointment = async (req, res) => {
+  process.stdout.write('🔔🔔🔔 CREATE APPOINTMENT ENDPOINT CALLED 🔔🔔🔔\n');
   const { name, phone, email, branch, doctor, date, time, message } = req.body;
 
   if (!name || !phone || !email || !branch || !doctor || !date || !time || !message) {
@@ -137,23 +138,33 @@ const createAppointment = async (req, res) => {
     });
 
     const savedAppointment = await newAppointment.save();
-    console.log('Appointment saved:', savedAppointment._id);
-    console.log('Appointment saved, calling email function...');
-    console.log('Calling email function...');
+    console.log('✓ Appointment saved:', savedAppointment._id);
+    process.stdout.write('⭐⭐⭐ TRIGGERING EMAIL/WHATSAPP NOW ⭐⭐⭐\n');
+
+    // Send confirmation email in background (non-blocking but with error handling)
+    console.log('[APPOINTMENT] 📧 Starting email send process...');
+    
+    sendAppointmentConfirmation(savedAppointment).then(() => {
+      process.stdout.write('✅ Email promise resolved\n');
+    }).catch((err) => {
+      console.error('[APPOINTMENT ERROR] ❌ Failed to send email:', err.message);
+    });
+
+    // Send WhatsApp notification in background (non-blocking but with error handling)
+    console.log('[APPOINTMENT] 📱 Starting WhatsApp send process...');
+    
+    sendWhatsAppNotification(savedAppointment).then(() => {
+      process.stdout.write('✅ WhatsApp promise resolved\n');
+    }).catch((err) => {
+      console.error('[APPOINTMENT ERROR] ❌ Failed to send WhatsApp:', err.message);
+    });
 
     // Send response immediately to frontend (don't await email/WhatsApp)
+    process.stdout.write('📤 SENDING RESPONSE TO FRONTEND\n');
     res.status(201).json({
       appointment: savedAppointment,
       message: 'Appointment created. Email and WhatsApp notification are queued.'
     });
-
-    // Send confirmation email in background (non-blocking)
-    console.log('Queueing email send for:', savedAppointment.email);
-    sendAppointmentConfirmation(savedAppointment);
-
-    // Send WhatsApp notification in background (non-blocking)
-    console.log('Queueing WhatsApp notification for:', savedAppointment.phone);
-    sendWhatsAppNotification(savedAppointment);
   } catch (error) {
     console.error('createAppointment error:', error.message);
     res.status(500).json({ message: error.message });
