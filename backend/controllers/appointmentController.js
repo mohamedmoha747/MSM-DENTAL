@@ -91,10 +91,13 @@ const getDashboardStats = async (req, res) => {
 // Create a new appointment
 const createAppointment = async (req, res) => {
   process.stdout.write('🔔🔔🔔 CREATE APPOINTMENT ENDPOINT CALLED 🔔🔔🔔\n');
-  const { name, phone, email, branch, doctor, date, time, message } = req.body;
+  const { name, phone, email, branch, doctor, date, time, message, notes } = req.body;
 
-  if (!name || !phone || !email || !branch || !doctor || !date || !time || !message) {
-    return res.status(400).json({ message: 'All fields are required' });
+  // For backward compatibility: if message is provided (patient form), use it; else use notes (admin form)
+  const appointmentMessage = message || notes || '';
+
+  if (!name || !phone || !email || !branch || !doctor || !date || !time) {
+    return res.status(400).json({ message: 'All required fields must be provided' });
   }
 
   if (!['Pattukkottai', 'Adirampattinam'].includes(branch)) {
@@ -132,9 +135,9 @@ const createAppointment = async (req, res) => {
       doctor,
       date,
       time,
-      message,
+      message: appointmentMessage,
       status: 'Pending',
-      notes: '',
+      notes: notes || '',
     });
 
     const savedAppointment = await newAppointment.save();

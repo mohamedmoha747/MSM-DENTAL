@@ -40,7 +40,7 @@ const AdminAppointments = () => {
     doctor: 'sameer',
     date: '',
     time: '',
-    message: '',
+    notes: '',
   });
   const [appointmentSuccess, setAppointmentSuccess] = useState('');
   const [appointmentMessageType, setAppointmentMessageType] = useState('success');
@@ -190,7 +190,7 @@ const AdminAppointments = () => {
         doctor: 'sameer',
         date: '',
         time: '',
-        message: '',
+        notes: '',
       });
       setAvailableSlots([]);
       setBookedSlots([]);
@@ -418,11 +418,10 @@ const AdminAppointments = () => {
               {slotsError && <p className="text-red-500 text-xs mt-1">{slotsError}</p>}
             </div>
             <textarea
-              placeholder="Message"
-              value={appointmentFormData.message}
-              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, message: e.target.value })}
+              placeholder="Notes (optional)"
+              value={appointmentFormData.notes}
+              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, notes: e.target.value })}
               className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:col-span-2"
-              required
             />
             <button
               type="submit"
