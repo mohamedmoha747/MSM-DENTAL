@@ -54,7 +54,7 @@ const sendAppointmentConfirmation = async (appointmentData) => {
     console.log('[EMAIL] ✓ Sender email:', process.env.EMAIL_USER);
     console.log('[EMAIL] ✓ Recipient:', appointmentData.email);
 
-    const { name, email, date, time } = appointmentData;
+    const { name, email, date, time, doctor, branch } = appointmentData;
     const appointmentDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
     const appointmentDateTime = `${appointmentDate}T${time}:00+05:30`;
     const formattedDateTime = new Date(appointmentDateTime).toLocaleString('en-IN', {
@@ -82,7 +82,10 @@ const sendAppointmentConfirmation = async (appointmentData) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Appointment Confirmed!</h2>
           <p>Hi ${name},</p>
-          <p>Your appointment has been confirmed at ${formattedDateTime}.</p>
+          <p>Your appointment has been confirmed.</p>
+          <p><strong>Doctor:</strong> ${doctor}</p>
+          <p><strong>Date &amp; Time:</strong> ${formattedDateTime}</p>
+          <p><strong>Branch:</strong> ${branch}</p>
           <p>Thank you for choosing MSM Dental Clinic.</p>
           <p>If you have any questions, please contact us.</p>
           <br>
