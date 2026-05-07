@@ -54,7 +54,18 @@ const sendAppointmentConfirmation = async (appointmentData) => {
     console.log('[EMAIL] ✓ Sender email:', process.env.EMAIL_USER);
     console.log('[EMAIL] ✓ Recipient:', appointmentData.email);
 
-    const { name, email, date } = appointmentData;
+    const { name, email, date, time } = appointmentData;
+    const appointmentDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+    const appointmentDateTime = `${appointmentDate}T${time}:00+05:30`;
+    const formattedDateTime = new Date(appointmentDateTime).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
 
     // Prepare email payload for Brevo API v3
     const emailData = {
@@ -71,7 +82,7 @@ const sendAppointmentConfirmation = async (appointmentData) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #2563eb;">Appointment Confirmed!</h2>
           <p>Hi ${name},</p>
-          <p>Your appointment has been confirmed at ${new Date(date).toLocaleString()}.</p>
+          <p>Your appointment has been confirmed at ${formattedDateTime}.</p>
           <p>Thank you for choosing MSM Dental Clinic.</p>
           <p>If you have any questions, please contact us.</p>
           <br>
@@ -129,12 +140,24 @@ const sendWhatsAppNotification = async (appointmentData) => {
       return;
     }
 
-    const { name, phone, date, branch } = appointmentData;
+    const { name, phone, date, time, branch } = appointmentData;
     
+    const appointmentDate = date instanceof Date ? date.toISOString().split('T')[0] : date;
+    const appointmentDateTime = `${appointmentDate}T${time}:00+05:30`;
+    const formattedDateTime = new Date(appointmentDateTime).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
     // Format phone number (ensure it has country code)
     const formattedPhone = phone.startsWith('+') ? phone.replace(/\D/g, '') : '91' + phone.replace(/\D/g, '');
     
-    const message = `Hello ${name},\n\nYour appointment has been confirmed at MSM Dental Clinic, ${branch}.\n\nAppointment Date & Time: ${new Date(date).toLocaleString()}\n\nThank you for choosing us!\n\nMSM Dental Clinic Team`;
+    const message = `Hello ${name},\n\nYour appointment has been confirmed at MSM Dental Clinic, ${branch}.\n\nAppointment Date & Time: ${formattedDateTime}\n\nThank you for choosing us!\n\nMSM Dental Clinic Team`;
 
     // Send WhatsApp message via Meta WhatsApp Business API
     const response = await fetch(
