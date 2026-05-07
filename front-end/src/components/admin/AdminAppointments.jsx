@@ -43,6 +43,11 @@ const AdminAppointments = () => {
     message: '',
   });
   const [appointmentSuccess, setAppointmentSuccess] = useState('');
+  const [appointmentMessageType, setAppointmentMessageType] = useState('success');
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
 
   const buildQueryParams = (page = 1) => {
     const params = new URLSearchParams();
@@ -157,9 +162,25 @@ const AdminAppointments = () => {
 
   const handleAppointmentSubmit = async (e) => {
     e.preventDefault();
+
+    if (!appointmentFormData.time) {
+      setAppointmentMessageType('error');
+      setAppointmentSuccess('❌ Please select an available time slot.');
+      setTimeout(() => setAppointmentSuccess(''), 5000);
+      return;
+    }
+
+    if (bookedSlots.includes(appointmentFormData.time)) {
+      setAppointmentMessageType('error');
+      setAppointmentSuccess('❌ This slot is already booked. Please choose another time.');
+      setTimeout(() => setAppointmentSuccess(''), 5000);
+      return;
+    }
+
     setLoading(true);
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, appointmentFormData);
+      setAppointmentMessageType('success');
       setAppointmentSuccess('✅ Appointment created successfully!');
       setAppointmentFormData({
         name: '',
@@ -171,12 +192,17 @@ const AdminAppointments = () => {
         time: '',
         message: '',
       });
+      setAvailableSlots([]);
+      setBookedSlots([]);
+      setSlotsError('');
       setShowAppointmentForm(false);
       fetchAppointments(1);
       setTimeout(() => setAppointmentSuccess(''), 5000);
     } catch (error) {
       console.error('Appointment creation error:', error);
-      setAppointmentSuccess('❌ Error creating appointment.');
+      const errorMessage = error.response?.data?.message || 'Error creating appointment.';
+      setAppointmentMessageType('error');
+      setAppointmentSuccess(`❌ ${errorMessage}`);
       setTimeout(() => setAppointmentSuccess(''), 5000);
     }
     setLoading(false);
@@ -216,6 +242,47 @@ const AdminAppointments = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const fetchAvailableSlots = async () => {
+    const { date, branch, doctor } = appointmentFormData;
+    if (!date || !branch || !doctor) {
+      setAvailableSlots([]);
+      setBookedSlots([]);
+      setSlotsError('');
+      return;
+    }
+
+    setSlotsLoading(true);
+    setSlotsError('');
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/available-slots`, {
+        params: { date, branch, doctor },
+      });
+
+      const apiSlots = response.data.slots || [];
+      const apiBookedSlots = response.data.bookedSlots || [];
+
+      setAvailableSlots(apiSlots);
+      setBookedSlots(apiBookedSlots);
+
+      if (appointmentFormData.time && !apiSlots.includes(appointmentFormData.time)) {
+        setAppointmentFormData((prev) => ({ ...prev, time: '' }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch available slots:', error);
+      setAvailableSlots([]);
+      setBookedSlots([]);
+      setSlotsError(error.response?.data?.message || 'Unable to load available slots');
+    } finally {
+      setSlotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentFormData.date, appointmentFormData.branch, appointmentFormData.doctor]);
+
   useEffect(() => {
     fetchAppointments();
   }, []);
@@ -235,7 +302,7 @@ const AdminAppointments = () => {
               onClick={() => setShowAppointmentForm(!showAppointmentForm)}
               className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 whitespace-nowrap flex items-center justify-center"
             >
-              {showAppointmentForm ? 'Hide Form' : 'Create Appointment'}
+              {showAppointmentForm ? 'Hide Form' : '+ Book Appointment'}
             </button>
             <button
               type="button"
@@ -257,7 +324,13 @@ const AdminAppointments = () => {
 
       {/* Appointment Success Message */}
       {appointmentSuccess && (
-        <div className="rounded-3xl border border-green-200 bg-green-50 p-4 text-green-700">
+        <div
+          className={
+            appointmentMessageType === 'error'
+              ? 'rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700'
+              : 'rounded-3xl border border-green-200 bg-green-50 p-4 text-green-700'
+          }
+        >
           {appointmentSuccess}
         </div>
       )}
@@ -265,7 +338,7 @@ const AdminAppointments = () => {
       {/* Create Appointment Form */}
       {showAppointmentForm && (
         <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Create New Appointment</h2>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Book Appointment</h2>
           <form onSubmit={handleAppointmentSubmit} className="grid gap-4 md:grid-cols-2">
             <input
               type="text"
@@ -293,7 +366,7 @@ const AdminAppointments = () => {
             />
             <select
               value={appointmentFormData.branch}
-              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, branch: e.target.value })}
+              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, branch: e.target.value, time: '' })}
               className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {branchOptions.map((b) => (
@@ -304,7 +377,7 @@ const AdminAppointments = () => {
             </select>
             <select
               value={appointmentFormData.doctor}
-              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, doctor: e.target.value })}
+              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, doctor: e.target.value, time: '' })}
               className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {doctorOptions.map((d) => (
@@ -316,17 +389,34 @@ const AdminAppointments = () => {
             <input
               type="date"
               value={appointmentFormData.date}
-              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, date: e.target.value })}
+              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, date: e.target.value, time: '' })}
               className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               required
             />
-            <input
-              type="time"
-              value={appointmentFormData.time}
-              onChange={(e) => setAppointmentFormData({ ...appointmentFormData, time: e.target.value })}
-              className="rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              required
-            />
+            <div className="md:col-span-1">
+              <label className="sr-only">Available Time Slot</label>
+              <select
+                value={appointmentFormData.time}
+                onChange={(e) => setAppointmentFormData({ ...appointmentFormData, time: e.target.value })}
+                className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                required
+              >
+                <option value="" disabled>
+                  {slotsLoading ? 'Loading slots...' : 'Select available time slot'}
+                </option>
+                {!slotsLoading && availableSlots.length === 0 && (
+                  <option value="" disabled>
+                    {slotsError || 'No available slots for selected doctor, branch, and date'}
+                  </option>
+                )}
+                {availableSlots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
+              {slotsError && <p className="text-red-500 text-xs mt-1">{slotsError}</p>}
+            </div>
             <textarea
               placeholder="Message"
               value={appointmentFormData.message}
