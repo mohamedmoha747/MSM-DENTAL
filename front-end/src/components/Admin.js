@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 
@@ -29,6 +29,24 @@ const Admin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Booking modal states
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingFormData, setBookingFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    branch: 'Adirampattinam',
+    doctor: 'sameer',
+    date: '',
+    time: '',
+    notes: '',
+  });
+  const [bookingAvailableSlots, setBookingAvailableSlots] = useState([]);
+  const [bookingSlotsLoading, setBookingSlotsLoading] = useState(false);
+  const [bookingSlotsError, setBookingSlotsError] = useState('');
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [bookingMessageType, setBookingMessageType] = useState('success');
 
   // Notes modal states
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -210,6 +228,109 @@ const Admin = () => {
     fetchAppointments(1);
   };
 
+  useEffect(() => {
+    console.log('Admin dashboard rendered');
+  }, []);
+
+  useEffect(() => {
+    if (showBookingModal) {
+      console.log('Book Appointment button rendered');
+    }
+  }, [showBookingModal]);
+
+  const fetchBookingSlots = async () => {
+    const { date, branch, doctor } = bookingFormData;
+
+    if (!date || !branch || !doctor) {
+      setBookingAvailableSlots([]);
+      setBookingSlotsError('');
+      return;
+    }
+
+    setBookingSlotsLoading(true);
+    setBookingSlotsError('');
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/available-slots`, {
+        params: { date, branch, doctor },
+      });
+
+      const apiSlots = response.data.slots || [];
+      setBookingAvailableSlots(apiSlots);
+
+      if (bookingFormData.time && !apiSlots.includes(bookingFormData.time)) {
+        setBookingFormData((prev) => ({ ...prev, time: '' }));
+      }
+    } catch (error) {
+      console.error('Error fetching booking slots:', error);
+      setBookingAvailableSlots([]);
+      setBookingSlotsError(error.response?.data?.message || 'Unable to load available slots');
+    } finally {
+      setBookingSlotsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookingSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingFormData.date, bookingFormData.branch, bookingFormData.doctor]);
+
+  const handleResetBookingForm = () => {
+    setBookingFormData({
+      name: '',
+      phone: '',
+      email: '',
+      branch: 'Adirampattinam',
+      doctor: 'sameer',
+      date: '',
+      time: '',
+      notes: '',
+    });
+    setBookingAvailableSlots([]);
+    setBookingSlotsError('');
+    setBookingMessage('');
+    setBookingMessageType('success');
+  };
+
+  const handleBookingSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!bookingFormData.name || !bookingFormData.phone || !bookingFormData.email || !bookingFormData.date || !bookingFormData.branch || !bookingFormData.doctor || !bookingFormData.time) {
+      setBookingMessageType('error');
+      setBookingMessage('Please fill in all required fields and select an available time slot.');
+      return;
+    }
+
+    if (!bookingAvailableSlots.includes(bookingFormData.time)) {
+      setBookingMessageType('error');
+      setBookingMessage('This slot is already booked or unavailable. Please choose another time.');
+      return;
+    }
+
+    setBookingMessage('');
+    setBookingMessageType('success');
+    setLoading(true);
+
+    try {
+      console.log('Button clicked');
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/appointments`, bookingFormData);
+      setBookingMessageType('success');
+      setBookingMessage('Appointment booked successfully.');
+      setShowBookingModal(false);
+      handleResetBookingForm();
+      fetchAppointments(1);
+      fetchDashboardStats();
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      setBookingMessageType('error');
+      setBookingMessage(error.response?.data?.message || 'Unable to create appointment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log('Book Appointment button rendered');
+
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-12">
@@ -318,6 +439,14 @@ const Admin = () => {
               className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 hover:text-white dark:hover:bg-blue-400 dark:hover:text-slate-900 transition-all text-sm md:text-base"
             >
               🔄 Refresh
+            </button>
+            <button
+              onClick={() => {
+                setShowBookingModal(true);
+              }}
+              className="border-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400 px-4 md:px-6 py-2 rounded-lg font-semibold hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-400 dark:hover:text-slate-900 transition-all text-sm md:text-base"
+            >
+              Book Appointment
             </button>
             <button
               onClick={exportToCSV}
@@ -514,6 +643,131 @@ const Admin = () => {
             </button>
           </div>
         </motion.div>
+
+        {/* Booking Modal */}
+        {showBookingModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl overflow-auto max-h-[90vh]"
+            >
+              <div className="flex items-center justify-between mb-6 gap-3">
+                <div>
+                  <h3 className="text-2xl font-semibold text-slate-900">Book Appointment</h3>
+                  <p className="text-sm text-slate-500">Create a manual appointment for patients.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBookingModal(false);
+                    handleResetBookingForm();
+                  }}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition"
+                >
+                  Close
+                </button>
+              </div>
+
+              {bookingMessage && (
+                <div className={`rounded-2xl p-4 mb-4 ${bookingMessageType === 'error' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`}>
+                  {bookingMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleBookingSubmit} className="grid gap-4 md:grid-cols-2">
+                <input
+                  type="text"
+                  placeholder="Patient Name"
+                  value={bookingFormData.name}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, name: e.target.value })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={bookingFormData.phone}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, phone: e.target.value })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={bookingFormData.email}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, email: e.target.value })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                />
+                <select
+                  value={bookingFormData.doctor}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, doctor: e.target.value, time: '' })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                >
+                  <option value="sameer">sameer</option>
+                  <option value="fahmitha">fahmitha</option>
+                </select>
+                <select
+                  value={bookingFormData.branch}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, branch: e.target.value, time: '' })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                >
+                  <option value="Adirampattinam">Adirampattinam</option>
+                  <option value="Pattukkottai">Pattukkottai</option>
+                </select>
+                <input
+                  type="date"
+                  value={bookingFormData.date}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, date: e.target.value, time: '' })}
+                  className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                  required
+                />
+                <div className="w-full">
+                  <select
+                    value={bookingFormData.time}
+                    onChange={(e) => setBookingFormData({ ...bookingFormData, time: e.target.value })}
+                    className="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                    required
+                  >
+                    <option value="" disabled>
+                      {bookingSlotsLoading ? 'Loading slots...' : 'Select available slot'}
+                    </option>
+                    {!bookingSlotsLoading && bookingAvailableSlots.length === 0 && (
+                      <option value="" disabled>
+                        {bookingSlotsError || 'No available slots for selected doctor, branch, and date'}
+                      </option>
+                    )}
+                    {bookingAvailableSlots.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
+                  </select>
+                  {bookingSlotsError && <p className="text-sm text-red-600 mt-2">{bookingSlotsError}</p>}
+                </div>
+                <textarea
+                  placeholder="Notes (optional)"
+                  value={bookingFormData.notes}
+                  onChange={(e) => setBookingFormData({ ...bookingFormData, notes: e.target.value })}
+                  className="w-full md:col-span-2 rounded-2xl border border-gray-300 px-4 py-3 focus:border-blue-500 focus:ring-blue-100 focus:ring-2 outline-none"
+                />
+                <button
+                  type="submit"
+                  className="md:col-span-2 rounded-2xl bg-blue-600 text-white px-6 py-3 font-semibold hover:bg-blue-700 transition"
+                >
+                  Book Appointment
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
 
         {/* Content Area */}
         {loading ? (

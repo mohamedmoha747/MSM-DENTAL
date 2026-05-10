@@ -7,11 +7,11 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Doctor availability configuration (constant outside component)
 const doctorAvailability = {
   sameer: {
-    branches: ['Adirampattinam', 'Pattukottai'],
+    branches: ['Adirampattinam', 'Pattukkottai'],
     schedule: [
       {
         days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'],
-        branches: [ 'Pattukottai'],
+        branches: ['Pattukkottai'],
         intervals: [{ start: '09:30', end: '13:00' }],
       },
       {
@@ -20,7 +20,7 @@ const doctorAvailability = {
         intervals: [{ start: '09:30', end: '13:00' }],
       },
       {
-        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday','Saturday'],
+        days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
         branches: ['Adirampattinam'],
         intervals: [{ start: '17:00', end: '20:15' }],
       },

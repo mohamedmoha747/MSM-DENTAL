@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Phone, MessageCircle, Edit, Trash2 } from 'lucide-react';
 
-const statusOptions = ['booked', 'cancelled'];
-const branchOptions = ['Adirampattinam', 'Pattukottai'];
+const statusOptions = ['Pending', 'Confirmed', 'Completed', 'Cancelled'];
+const branchOptions = ['Adirampattinam', 'Pattukkottai'];
 const doctorOptions = ['sameer', 'fahmitha'];
 
 const AdminAppointments = () => {
