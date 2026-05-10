@@ -137,7 +137,7 @@ const Navbar = () => {
                 onClick={() => setIsOpen(false)}
                 className="block gradient-btn text-center text-sm md:text-base"
               >
-                Admin
+                LOGIN
               </Link>
             </motion.div>
           )}
