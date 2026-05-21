@@ -36,3 +36,46 @@
     transform: rotate(360deg);
   }
 }
+
+.doctor-card {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.doctor-image-container {
+  width: 100%;
+  height: 400px;
+  max-height: 420px;
+  overflow: hidden;
+  border-radius: 24px;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doctor-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.doctor-image-container:hover .doctor-image,
+.doctor-card:hover .doctor-image {
+  transform: scale(1.03);
+}
+
+@media (max-width: 1024px) {
+  .doctor-image-container {
+    height: 360px;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-image-container {
+    height: 300px;
+  }
+}

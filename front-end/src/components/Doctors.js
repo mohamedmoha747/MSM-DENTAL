@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+const defaultDoctorImage = process.env.PUBLIC_URL + '/images/default-doctor.svg';
+
 const Doctors = () => {
   const doctors = [
     {
@@ -8,7 +10,7 @@ const Doctors = () => {
       qualifications: 'BDS., MDS (OMFS), F. Implantology',
       specialization: 'Consultant Oral Maxillofacial Surgeon & Implantologist',
       regNo: 'Reg. No: 19469',
-      image: 'https://images.unsplash.com/photo-1612529423246-f3167919cdc9?w=400&h=500&fit=crop',
+      image: process.env.PUBLIC_URL + '/images/sammer.jpeg',
       color: 'from-blue-500 to-cyan-500'
     },
     {
@@ -16,7 +18,7 @@ const Doctors = () => {
       qualifications: 'BDS., MBA (H.M), FMAC',
       specialization: 'Dental Surgeon & Cosmetologist',
       regNo: 'Reg. No: 27733',
-      image: 'https://images.unsplash.com/photo-1594824957154-f6d34a54c7e6?w=400&h=500&fit=crop',
+      image: '',
       color: 'from-purple-500 to-pink-500'
     },
   ];
@@ -38,6 +40,11 @@ const Doctors = () => {
       y: 0,
       transition: { duration: 0.8 },
     },
+  };
+
+  const handleImageError = (event) => {
+    event.currentTarget.onerror = null;
+    event.currentTarget.src = defaultDoctorImage;
   };
 
   return (
@@ -67,13 +74,14 @@ const Doctors = () => {
               key={index}
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
-              className="bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 text-center group p-6"
+              className="doctor-card bg-white dark:bg-slate-800 rounded-[28px] shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] text-center group p-6"
             >
-              <div className={`mb-4 md:mb-6 overflow-hidden rounded-2xl h-48 md:h-64 bg-gradient-to-br ${doctor.color}`}>
+              <div className="doctor-image-container mb-4 md:mb-6">
                 <img
-                  src={doctor.image}
+                  src={doctor.image || defaultDoctorImage}
                   alt={doctor.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  onError={handleImageError}
+                  className="doctor-image"
                 />
               </div>
               <h3 className="text-xl md:text-2xl font-bold mb-2 text-gray-900 dark:text-white">
