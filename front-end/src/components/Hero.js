@@ -35,13 +35,13 @@ const Hero = () => {
             className="text-center lg:text-left"
           >
             <motion.h1 variants={itemVariants} className="mb-4 md:mb-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-primary-500 to-primary-600 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent">
-              MSM DENTAL AND FACIOMAXILLARY CENTER
+              Best Dental Clinic in Adirampattinam & Pattukottai
             </motion.h1>
             <motion.h2 variants={itemVariants} className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-4 md:mb-6 text-gray-700 dark:text-gray-300">
-              with Expert Specialists
+              MSM Dental and Faciomaxillary Center — Expert Specialists
             </motion.h2>
             <motion.p variants={itemVariants} className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 md:mb-10 leading-relaxed">
-              Providing high-quality dental and maxillofacial treatments with modern technology and compassionate care.
+              Serving Adirampattinam and Pattukottai with high-quality dental care — root canal, braces, implants, cosmetic dentistry, and routine teeth cleaning. Book appointments online for your preferred branch today.
             </motion.p>
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <a href="#appointment" className="bg-primary-500 hover:bg-primary-600 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/50 hover:scale-105 active:scale-95 text-base md:text-lg">
