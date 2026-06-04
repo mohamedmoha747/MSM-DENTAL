@@ -380,22 +380,22 @@ const AppointmentForm = () => {
 
           <motion.div variants={itemVariants}>
             <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2 text-sm md:text-base">
-              Phone <span className="text-red-500">*</span>
+              Appointment Date <span className="text-red-500">*</span>
             </label>
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="date"
+              name="date"
+              value={formData.date}
               onChange={handleChange}
               className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors text-sm md:text-base dark:bg-slate-700 dark:text-white ${
-                validationErrors.phone
+                validationErrors.date
                   ? 'border-red-500 dark:border-red-500'
                   : 'border-gray-300 dark:border-slate-600 focus:border-primary-500 dark:focus:border-primary-400'
               }`}
               required
             />
-            {validationErrors.phone && (
-              <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
+            {validationErrors.date && (
+              <p className="text-red-500 text-xs mt-1">{validationErrors.date}</p>
             )}
           </motion.div>
 
@@ -442,22 +442,22 @@ const AppointmentForm = () => {
 
           <motion.div variants={itemVariants}>
             <label className="block text-gray-700 dark:text-gray-300 font-semibold mb-2 text-sm md:text-base">
-              Appointment Date <span className="text-red-500">*</span>
+              Phone <span className="text-red-500">*</span>
             </label>
             <input
-              type="date"
-              name="date"
-              value={formData.date}
+              type="tel"
+              name="phone"
+              value={formData.phone}
               onChange={handleChange}
               className={`w-full p-3 border-2 rounded-lg focus:outline-none transition-colors text-sm md:text-base dark:bg-slate-700 dark:text-white ${
-                validationErrors.date
+                validationErrors.phone
                   ? 'border-red-500 dark:border-red-500'
                   : 'border-gray-300 dark:border-slate-600 focus:border-primary-500 dark:focus:border-primary-400'
               }`}
               required
             />
-            {validationErrors.date && (
-              <p className="text-red-500 text-xs mt-1">{validationErrors.date}</p>
+            {validationErrors.phone && (
+              <p className="text-red-500 text-xs mt-1">{validationErrors.phone}</p>
             )}
           </motion.div>
 
